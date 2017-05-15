@@ -1,45 +1,17 @@
 package main
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"context"
-	"github.com/justinas/alice"
+	"github.com/gin-gonic/gin"
 )
 
 type Route struct {
-	Name    string
-	Method  string
-	Pattern string
-	Handler http.HandlerFunc
+	Name        string
+	Method      string
+	Pattern     string
+	HandlerFunc gin.HandlerFunc
 }
 
 type Routes []Route
-
-func NewRouter() *httprouter.Router {
-	router := httprouter.New()
-	for _, route := range routes {
-		router.Handle(route.Method, route.Pattern, wrap(route))
-	}
-
-	return router
-}
-
-func wrap(r Route) httprouter.Handle {
-	return wrapHandler(
-		alice.New(
-			LogHandler,
-		).
-			Then(r.Handler))
-}
-
-func wrapHandler(h http.Handler) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		ctx := context.WithValue(r.Context(), "params", ps)
-		r = r.WithContext(ctx)
-		h.ServeHTTP(w, r)
-	}
-}
 
 var routes = Routes{
 	Route{
@@ -53,6 +25,12 @@ var routes = Routes{
 		"GET",
 		"/todos",
 		TodoIndex,
+	},
+	Route{
+		"TodoCreate",
+		"POST",
+		"/todos",
+		TodoCreate,
 	},
 	Route{
 		"TodoShow",

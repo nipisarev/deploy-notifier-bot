@@ -2,31 +2,39 @@ package main
 
 import (
 	"net/http"
-	"fmt"
-	"html"
-	"encoding/json"
-	"github.com/julienschmidt/httprouter"
+	"./models"
+	"strconv"
+	"github.com/gin-gonic/gin"
 )
 
-func FetchParams(req *http.Request) httprouter.Params {
-	ctx := req.Context()
-	return ctx.Value("params").(httprouter.Params)
+func Index(c *gin.Context) {
+	c.String(http.StatusOK, "welcome")
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome, %q", html.EscapeString(r.RequestURI))
+func TodoIndex(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=UTF-8")
+
+	c.JSON(http.StatusOK, todos)
 }
 
-func TodoIndex(w http.ResponseWriter, r *http.Request) {
-	todos := Todos{
-		Todo{Name: "Write presentation", Completed: true},
-		Todo{Name: "Host meetup"},
+func TodoShow(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=UTF-8") //.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	i, err := strconv.Atoi(c.Param("todoId"))
+	if err != nil {
+		panic(err)
 	}
-
-	json.NewEncoder(w).Encode(todos)
+	todo, err := RepoFindTodod(i);
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(http.StatusOK, todo)
 }
 
-func TodoShow(w http.ResponseWriter, r *http.Request) {
-	params := FetchParams(r)
-	fmt.Fprintf(w, "Todo is %s", params.ByName("todoId"))
+func TodoCreate(c *gin.Context) {
+	var todo models.Todo
+	c.BindJSON(&todo)
+	t := RepoCreateTodo(todo)
+	c.Header("Content-Type", "application/json; charset=UTF-8")
+	c.JSON(http.StatusCreated, t)
 }
