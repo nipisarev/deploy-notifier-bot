@@ -5,21 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"fmt"
 	"time"
-	"os"
-	"github.com/mattn/go-isatty"
 	"io"
+	"io/ioutil"
+	"net/http"
 )
 
-var (
-	green   = string([]byte{27, 91, 57, 55, 59, 52, 50, 109})
-	white   = string([]byte{27, 91, 57, 48, 59, 52, 55, 109})
-	yellow  = string([]byte{27, 91, 57, 55, 59, 52, 51, 109})
-	red     = string([]byte{27, 91, 57, 55, 59, 52, 49, 109})
-	blue    = string([]byte{27, 91, 57, 55, 59, 52, 52, 109})
-	magenta = string([]byte{27, 91, 57, 55, 59, 52, 53, 109})
-	cyan    = string([]byte{27, 91, 57, 55, 59, 52, 54, 109})
-	reset   = string([]byte{27, 91, 48, 109})
-)
+var req []byte
 
 type bodyLogWriter struct {
 	gin.ResponseWriter
@@ -31,16 +22,11 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func LoggerResp() gin.HandlerFunc {
-	return LogResponse(gin.DefaultWriter)
+func Logger() gin.HandlerFunc {
+	return log(gin.DefaultWriter)
 }
-func LogResponse(out io.Writer, notlogged ...string) gin.HandlerFunc {
 
-	isTerm := true
-
-	if w, ok := out.(*os.File); !ok || !isatty.IsTerminal(w.Fd()) {
-		isTerm = false
-	}
+func log(out io.Writer, notlogged ...string) gin.HandlerFunc {
 
 	var skip map[string]struct{}
 
@@ -53,64 +39,40 @@ func LogResponse(out io.Writer, notlogged ...string) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		start := time.Now()
 		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = blw
 		path := c.Request.URL.Path
-		start := time.Now()
-		end := time.Now()
-		latency := end.Sub(start)
-
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
-		var statusColor, methodColor string
-		if isTerm {
-			statusColor = colorForStatus(statusCode)
-			methodColor = colorForMethod(method)
+		if method == "POST" {
+			req, _ = GetBody(c.Request)
 		}
+
 		c.Next()
-		fmt.Fprintf(out, "[GIN] %v |%s %3d %s| %13v | %s |%s  %s %-7s %s\t %s",
+		end := time.Now()
+		latency := end.Sub(start)
+
+		fmt.Fprintf(out, "%v [Request] %s |status: %3d | %s | %s | body: %s\n"+
+			"%v [Response] %13v | body: %s\n",
 			end.Format("2006/01/02 - 15:04:05"),
-			statusColor, statusCode, reset,
-			latency,
+			method,
+			statusCode,
 			clientIP,
-			methodColor, reset, method,
 			path,
+			req,
+			end.Format("2006/01/02 - 15:04:05"),
+			latency,
 			blw.body.String(),
 		)
 	}
 }
 
-func colorForStatus(code int) string {
-	switch {
-	case code >= 200 && code < 300:
-		return green
-	case code >= 300 && code < 400:
-		return white
-	case code >= 400 && code < 500:
-		return yellow
-	default:
-		return red
-	}
-}
+func GetBody(req *http.Request) ([]byte, error) {
+	reqBody, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
+	req.Body.Close()
+	req.Body = ioutil.NopCloser(bytes.NewReader(reqBody))
 
-func colorForMethod(method string) string {
-	switch method {
-	case "GET":
-		return blue
-	case "POST":
-		return cyan
-	case "PUT":
-		return yellow
-	case "DELETE":
-		return red
-	case "PATCH":
-		return green
-	case "HEAD":
-		return magenta
-	case "OPTIONS":
-		return white
-	default:
-		return reset
-	}
+	return reqBody, err
 }
