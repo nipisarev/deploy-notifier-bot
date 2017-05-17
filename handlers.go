@@ -1,8 +1,8 @@
-package main
+package deploy_notifier_bot
 
 import (
 	"net/http"
-	"./models"
+	"github.com/nipisarev/deploy-notifier-bot/models"
 	"strconv"
 	"github.com/gin-gonic/gin"
 )
