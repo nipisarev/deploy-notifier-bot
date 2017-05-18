@@ -7,7 +7,7 @@ For simple run project and start listen on [localhost:8181](http://localhost:818
 ```bash
 go run *.go
 ```
-Or build 
+### Build 
 ```bash
 go build
 ```
