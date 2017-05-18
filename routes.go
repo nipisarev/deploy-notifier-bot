@@ -1,4 +1,4 @@
-package deploy_notifier_bot
+package main
 
 import (
 	"github.com/gin-gonic/gin"

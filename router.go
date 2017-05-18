@@ -1,8 +1,8 @@
-package deploy_notifier_bot
+package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"./middlewares"
+	"github.com/nipisarev/deploy-notifier-bot/middlewares"
 )
 
 func NewRouter() *gin.Engine {

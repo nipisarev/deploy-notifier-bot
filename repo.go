@@ -1,9 +1,9 @@
-package deploy_notifier_bot
+package main
 
 import (
 	"errors"
 	"fmt"
-	"./models"
+	"github.com/nipisarev/deploy-notifier-bot/models"
 )
 
 var currentId int

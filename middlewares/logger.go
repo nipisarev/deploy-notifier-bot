@@ -55,7 +55,7 @@ func log(out io.Writer, notlogged ...string) gin.HandlerFunc {
 		latency := end.Sub(start)
 
 		fmt.Fprintf(out, "%v [Request] %s |status: %3d | %s | %s | body: %s\n"+
-			"%v [Response] %13v | body: %s\n",
+			"%v [Response] %v | body: %s\n",
 			end.Format("2006/01/02 - 15:04:05"),
 			method,
 			statusCode,
