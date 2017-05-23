@@ -7,6 +7,7 @@ import (
 
 func NewRouter() *gin.Engine {
 	router := gin.New()
+	router.Use(middlewares.Monger())
 	router.Use(middlewares.Logger())
 	for _, route := range routes {
 		router.Handle(route.Method, route.Pattern, route.HandlerFunc)

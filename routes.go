@@ -23,19 +23,19 @@ var routes = Routes{
 	Route{
 		"TodoIndex",
 		"GET",
-		"/todos",
-		TodoIndex,
+		"/hosts",
+		HostIndex,
 	},
 	Route{
 		"TodoCreate",
 		"POST",
-		"/todos",
-		TodoCreate,
+		"/hosts",
+		AddHost,
 	},
 	Route{
-		"TodoShow",
+		"GetHost",
 		"GET",
-		"/todos/:todoId",
-		TodoShow,
+		"/hosts/:hostName",
+		GetHost,
 	},
 }

@@ -10,8 +10,6 @@ import (
 	"net/http"
 )
 
-var req []byte
-
 type bodyLogWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer
@@ -46,8 +44,11 @@ func log(out io.Writer, notlogged ...string) gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
+
+		var req []byte
 		if method == "POST" {
 			req, _ = GetBody(c.Request)
+			req = bytes.Replace(req, []byte("\n"), []byte(" "), -1)
 		}
 
 		c.Next()
@@ -55,7 +56,7 @@ func log(out io.Writer, notlogged ...string) gin.HandlerFunc {
 		latency := end.Sub(start)
 
 		fmt.Fprintf(out, "%v [Request] %s |status: %3d | %s | %s | body: %s\n"+
-			"%v [Response] %v | body: %s\n",
+			"%v [Response] %v | body: %s",
 			end.Format("2006/01/02 - 15:04:05"),
 			method,
 			statusCode,

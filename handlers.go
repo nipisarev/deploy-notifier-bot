@@ -3,38 +3,48 @@ package main
 import (
 	"net/http"
 	"github.com/nipisarev/deploy-notifier-bot/models"
-	"strconv"
 	"github.com/gin-gonic/gin"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func Index(c *gin.Context) {
 	c.String(http.StatusOK, "welcome")
 }
 
-func TodoIndex(c *gin.Context) {
+func HostIndex(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=UTF-8")
+	db := getDB(c)
+	results := []models.Host{}
 
-	c.JSON(http.StatusOK, todos)
+	if err := db.C("hosts").Find(nil).All(&results); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, results)
 }
 
-func TodoShow(c *gin.Context) {
-	c.Header("Content-Type", "application/json; charset=UTF-8") //.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func GetHost(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=UTF-8")
 
-	i, err := strconv.Atoi(c.Param("todoId"))
-	if err != nil {
-		panic(err)
-	}
-	todo, err := RepoFindTodod(i);
-	if err != nil {
-		panic(err)
-	}
-	c.JSON(http.StatusOK, todo)
+	name := c.Param("name")
+	h := models.Host{}
+	db := getDB(c)
+	db.C("hosts").Find(bson.M{"name": name}).One(&h)
+	c.JSON(http.StatusOK, h)
 }
 
-func TodoCreate(c *gin.Context) {
-	var todo models.Todo
-	c.BindJSON(&todo)
-	t := RepoCreateTodo(todo)
+func AddHost(c *gin.Context) {
+	var host models.Host
+	c.BindJSON(&host)
+	host.Id = bson.NewObjectId()
+	db := getDB(c)
+	db.C("hosts").Insert(&host)
 	c.Header("Content-Type", "application/json; charset=UTF-8")
-	c.JSON(http.StatusCreated, t)
+	c.JSON(http.StatusCreated, host)
+}
+
+func getDB(c *gin.Context) *mgo.Database {
+	return c.MustGet("db").(*mgo.Database)
 }
