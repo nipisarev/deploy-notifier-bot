@@ -31,20 +31,32 @@ func GetHost(c *gin.Context) {
 	name := c.Param("name")
 	h := models.Host{}
 	db := getDB(c)
-	db.C("hosts").Find(bson.M{"name": name}).One(&h)
+	if err := db.C("hosts").Find(bson.M{"name": name}).One(&h); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
 	c.JSON(http.StatusOK, h)
 }
 
 func AddHost(c *gin.Context) {
 	var host models.Host
 	c.BindJSON(&host)
+
 	host.Id = bson.NewObjectId()
+	host.Hipchat.Id = bson.NewObjectId()
+	host.Slack.Id = bson.NewObjectId()
+	host.Jira.Id = bson.NewObjectId()
+
 	db := getDB(c)
-	db.C("hosts").Insert(&host)
+	err := db.C("hosts").Insert(&host)
+	if err != nil {
+		Must(err)
+	}
+	count,_ := db.C("hosts").Count()
 	c.Header("Content-Type", "application/json; charset=UTF-8")
-	c.JSON(http.StatusCreated, host)
+	c.JSON(http.StatusCreated, count)
 }
 
 func getDB(c *gin.Context) *mgo.Database {
-	return c.MustGet("db").(*mgo.Database)
+	return c.MustGet("mongo").(*mgo.Database)
 }

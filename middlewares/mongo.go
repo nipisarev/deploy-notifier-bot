@@ -5,15 +5,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var SESSION *mgo.Session
+var (
+	SESSION *mgo.Session
+	DB      *mgo.Database
+)
 
 func Monger() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
 		s := SESSION.Clone()
 		defer s.Close()
 
-		c.Set("db", s.DB("deployment"))
+		s.SetMode(mgo.Monotonic, false)
+		c.Set("mongo", DB)
 		c.Next()
 	}
 }

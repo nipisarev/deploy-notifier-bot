@@ -16,6 +16,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	middlewares.DB = session.DB("Deployment")
 	middlewares.SESSION = session
 }
 
